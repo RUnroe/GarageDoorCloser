@@ -1,5 +1,5 @@
 # PROTEC - A - GARAGE
-## High School PLTW Engineering Project ##
+### High School PLTW Engineering Project ###
 
 
 ## DESCRIPTION ##
