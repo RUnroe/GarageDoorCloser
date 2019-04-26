@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Garage Door</title>
+        <link rel="stylesheet" type="text/css" href="navBar.css">
+        <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css?family=Raleway" rel="stylesheet">
+    </head>
+    <style>
+        body{
+            background-color:#CCCCCC;
+            overflow:hidden;
+        }
+        #grid-container{
+            padding-top:5vh;
+            width:80%;
+            height:90vh;
+            display: grid;
+            grid-template-rows:3fr 1fr 3fr;
+            grid-template-columns:repeat(6, 1fr);
+            text-align:center;
+            margin:0 auto;
+            /*border:2px solid black;*/
+            background-color:white;
+            overflow:hidden;
+        } 
+        
+        #top{
+            grid-column: 3 / span 2;
+            grid-row:1;
+            text-align:center;
+            /*border:2px solid black;*/
+            
+        }
+        
+        #left{
+            grid-column:1 / span 3;
+            grid-row:3;
+            text-align:center;
+            /*border:2px solid black;*/
+        }
+        
+        #right{
+            grid-column:4 / span 3;
+            grid-row:3;
+            text-align:center;
+            /*border:2px solid black;*/
+        }
+        
+        h1{
+            font-family:"Raleway";
+            font-size:65px;
+            margin-bottom:2vh;
+            text-decoration:underline;
+        }
+        h2{
+            font-family:"Raleway";
+            font-size:45px;
+            margin-bottom:2vh;
+            text-decoration:underline;
+        }
+        p{
+            font-family:"Roboto";
+            font-size:25px;
+            margin-bottom:1vh;
+        }
+        
+        #updateTime{
+            position:absolute;
+            right:10.5vw;
+            top:65px;
+            z-index:20;
+        }
+        #updateTime p{
+            font-size:19px;
+            color:#999999;
+            transition-duration: 0.9s;
+        }
+        #updateTime:hover p{
+            color:black;
+        }
+    </style>
+    
+    
+    
+    <body>
+        
+        <ul id="list">
+          <li id="list-item"><a class="active" href="" >Home</a></li>
+          <li id="list-item"><a href="history.html" >History</a></li>
+        </ul>
+        
+        
+        
+        <div id="grid-container" align=center>
+            
+            <div id="updateTime">
+                <p>Last Updated</p>
+                <p id="updateTimeText">null null</p>
+            </div>
+            
+            <div id="top">
+            <h1>Garage Door</h1>
+            <p id="state">null</p>
+            </div>
+            
+            <div id="left">
+                <h2>Auto Close After</h2>
+                <p id="timeout">null</p>
+                <p>minutes</p>
+            </div>
+            
+            <div id="right">
+                <h2>Auto Close At</h2>
+                <p id="setTime">null</p>
+            </div>
+        </div>
+        
+        <script>
+        //Global variables
+        var garageData;
+        /*  garageData structure
+            timeout = x
+            setTimeHour = x
+            setTimeMinute = x
+            state = [
+                doorState:x,
+                timeHour:x;
+                timeMinute:x
+                day: M-D-Y
+            ]
+        */
+        
+        //Get HTML elements
+        var timeoutDisplay = document.getElementById("timeout");
+        var setTimeDisplay = document.getElementById("setTime");
+        var stateDisplay = document.getElementById("state");
+        var updateTimeText = document.getElementById("updateTimeText");
+        
+        window.onload = function(){
+            //wait until window is loaded to get data
+            loadJSON();
+            getDataTimer();
+        };
+        
+        function getDataTimer(){
+            //call loadJSON file every x seconds to recieve new data
+            setInterval(loadJSON, (5 * 1000)); // every 5 seconds
+        }
+        
+        function loadJSON(){
+            //Get data from JSON file
+            var xmlhttp = new XMLHttpRequest();
+            xmlhttp.onreadystatechange = function () {
+                if(this.readyState == 4 && this.status == 200){
+                    garageData = JSON.parse(this.responseText);
+                    renderPage();
+                    
+                }
+            };
+            xmlhttp.open("GET", "data.json", true);
+            xmlhttp.send();
+        }
+        
+        function renderPage(){
+            //Format and display all data 
+            var hour = garageData.setTimeHour;
+            var minute = garageData.setTimeMinute;
+            var time = fixTime(hour, minute);
+            
+            timeoutDisplay.innerHTML = garageData.timeout;
+            if(garageData.stateArray[garageData.stateArray.length-1].doorState == 1){
+                stateDisplay.innerHTML = "Closed";
+            }
+            else{
+                stateDisplay.innerHTML = "Open";
+            }
+            //Mark when JSON is grabbed from server
+            console.log("ajax");
+            
+            
+            setTimeDisplay.innerHTML = time;
+            
+            
+            var currTime = fixTime(garageData.stateArray[1].timeHour, garageData.stateArray[1].timeMinute);
+            updateTimeText.innerHTML = currTime + "  " + garageData.stateArray[1].day;
+        }
+        
+        
+        function fixTime(hour, minute){
+            //set time in AM / PM instead of Military
+            if(hour > 11){ // Detect if we need AM or PM
+                var AMPM = 'PM';
+                if(hour != 12){ // 12pm is start of pm's,  acting as zero
+                    hour -=12;
+                    if(hour == 12){// Make midnight 12AM
+                        AMPM = 'AM';
+                    }
+                }
+            }
+            else{
+                AMPM = 'AM';
+            }
+            
+            var time = hour + ":" + minute + " " + AMPM;
+            return time;
+        }
+        
+        
+        
+        </script>
+    </body>
+</html>

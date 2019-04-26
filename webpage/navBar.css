@@ -1,0 +1,49 @@
+*{
+    margin:0;
+    padding:0;
+}
+
+html {
+    overflow-x: hidden;
+}
+::-webkit-scrollbar {
+    width: 0px;  /* remove scrollbar  */
+}
+
+
+
+
+
+#list {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background-color: #333;
+  z-index:20;
+}
+
+#list-item {
+  float: left;
+  z-index:20;
+}
+
+#list-item a {
+  display: block;
+  color: white;
+  font-family:"Raleway", Helvetica;
+  font-size:18px;
+  text-align: center;
+  padding: 20px 40px;
+  text-decoration: none;
+  transition-duration: 0.3s;
+}
+
+#list-item a:hover {
+  background-color: #111;
+}
+
+.active{
+    background-color: orange !important; /*Important makes priority higher, preventing it to change color on hover ^*/
+    
+}

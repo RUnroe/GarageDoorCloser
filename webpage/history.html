@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html>
+    <head>
+    <title>History</title>
+    <link rel="stylesheet" type="text/css" href="navBar.css">
+    <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Raleway" rel="stylesheet">
+    
+    
+    <style>
+        body{
+            background-color:#CCCCCC;
+            /*overflow:hidden;*/
+            text-align:center;
+        }
+        div{
+            display:inline-block;
+            padding-top:2vh;
+            padding-bottom:4vh;
+            background-color:white;
+            width:80%;
+            height:100%;
+            bottom:0;
+            z-index:10;
+        }
+        #white{
+            position:fixed;
+            background-color:white;
+            z-index:-1;
+            height:100vh;
+        }
+        table{
+            text-align:center;
+            border: solid black 1px;
+            background-color:#202020;
+            z-index:20;
+        }
+        th{
+            background-color:white;
+            font-size:22px;
+            padding:1px 15px;
+            font-family:"Raleway";
+        }
+        td{
+            text-align:center;
+            padding:1px 15px;
+            background-color:white;
+            font-size:18px;
+            font-family: "Roboto";
+        }
+        #buttonTD{
+            padding:0;
+        }
+        input{
+            width:100%;
+            padding:5%;
+            background-color:#EEEEEE;
+            border:none;
+            transition-duration: 0.3s;
+        }
+        input:hover{
+            background-color:#b21010;
+            color:white;
+        }
+        
+        #deleteAllButton{
+            transition-duration: 0.3s;
+        }
+        #deleteAllButton:hover{
+            background-color:#b21010;
+            color:white;
+        }
+    </style>
+    </head>
+    
+    <body >
+        
+        <ul id="list">
+          <li id="list-item"><a href="display.html" >Home</a></li>
+          <li id="list-item"><a class="active" href="" >History</a></li>
+        </ul>
+        
+        <div id="white"></div>
+        <div align="center">
+        
+            <table id="dataTable">
+                <tr>
+                    <th>Date</th>
+                    <th>Time</th>
+                    <th>Door Change</th>
+                    <th id="deleteAllButton" onclick="deleteAll();">Delete</th>
+                </tr>
+                <!--This is where the data is appended-->
+            </table>
+            
+            
+        </div>
+        <script>
+            
+        //Global variables
+            
+        var historyData;
+        
+        
+        //Get HTML elements
+        var dataTable = document.getElementById("dataTable");
+        
+        
+        window.onload = function(){
+            //wait until window is loaded to get data
+            loadJSON();
+        };
+        
+        
+        function loadJSON(){
+            //Get data from JSON file
+            clearTable();
+            historyData = "";
+            var xmlhttp = new XMLHttpRequest();
+            xmlhttp.onreadystatechange = function () {
+                if(this.readyState == 4 && this.status == 200){
+                    historyData = JSON.parse(this.responseText);
+                    console.log(historyData);
+                    renderPage();
+                    console.log("Historyupdate");
+                }
+            };
+            var callTime = Date.now();
+            xmlhttp.open("GET", "history.json?call="+callTime, true);
+            xmlhttp.send();
+        }
+        
+        function renderPage(){
+            //Format and display all data 
+            fillPrevDoorStateChanges(); 
+               
+        }
+        function deleteAll(){
+            var confirmDelete = confirm("Clear all history?");
+            if(confirmDelete){
+                sendData("all");
+            }
+        }
+        function clearTable(){
+            var tableLength = dataTable.rows.length-1;
+            console.log(tableLength);
+            if(tableLength > 0){
+                for(var i = 0; i < tableLength; i++){
+                    dataTable.deleteRow(1);
+                    //console.log(`delete row ${i}`);
+                }
+            }
+        }
+        function fillPrevDoorStateChanges(){ 
+            //Display all previous state changes kept in JSON file       
+            //Populate table with all data
+            for(var i = historyData.data.length-1; i >=0; i--){ 
+                //console.log(`iteration ${i}`);
+                
+                var newTR = document.createElement("TR");
+                //newTR.setAttribute("id", i);
+                var dateTD = document.createElement("TD");
+                var timeTD = document.createElement("TD");
+                var stateTD = document.createElement("TD");
+                var deleteTD = document.createElement("TD");
+                deleteTD.id = "buttonTD";
+                var deleteButton = document.createElement("INPUT");
+                deleteButton.id = i;
+                deleteButton.setAttribute("type", "button");
+                deleteButton.setAttribute("value", "X");
+                deleteButton.onclick = function (){
+                    deleteData(this.id);
+                };
+            
+                var stateChange = historyData.data[i].stateChange;
+                var date = historyData.data[i].Date;
+                var time = fixTime(historyData.data[i].hour, historyData.data[i].minute);
+                
+                dateTD.innerHTML = date;
+                timeTD.innerHTML = time;
+                stateTD.innerHTML = stateChange;
+                
+                deleteTD.appendChild(deleteButton);
+                
+                newTR.appendChild(dateTD);
+                newTR.appendChild(timeTD);
+                newTR.appendChild(stateTD);
+                newTR.appendChild(deleteTD);
+                dataTable.appendChild(newTR);
+            
+            }
+        }
+        
+        function deleteData(row){
+            console.log(row);
+            //delete historyData.data[row]
+            sendData(row);
+        }
+        function sendData(index){
+            var xmlhttp = new XMLHttpRequest();
+            xmlhttp.onreadystatechange = function () {
+            if(this.readyState == 4 && this.status == 200){
+                console.log(this.responseText);
+                setTimeout(loadJSON, 100); //delay allows the json to fully update before bringing it back to html page
+            }
+            };
+            xmlhttp.open("POST", "removeHistoryData.php", true);
+            xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+            xmlhttp.send("index=" + index);
+        }
+        
+        function fixTime(hour, minute){
+            //set time in AM / PM instead of Military
+            if(hour > 11){ // Detect if we need AM or PM
+                var AMPM = 'PM';
+                if(hour != 12){ // 12pm is start of pm's,  acting as zero
+                    hour -=12;
+                    if(hour == 12){// Make midnight 12AM
+                        AMPM = 'AM';
+                    }
+                }
+            }
+            else{
+                AMPM = 'AM';
+            }
+            
+            var time = hour + ":" + minute + " " + AMPM;
+            return time;
+        }
+            
+        </script>
+        
+    </body>
+</html>
